@@ -1,0 +1,51 @@
+<evaluation>
+  <qa_pair>
+    <question>List all projects in the Jira instance. What is the project key of the project whose name comes first alphabetically?</question>
+    <answer>Use jira_list_projects with no filters and sort results alphabetically by name. The answer is the key of the first project.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Find the issue in project "PROJ" that was created earliest. What is the issue key? Use the date format YYYY-MM-DD for any dates in your reasoning.</question>
+    <answer>Use jira_search_issues with JQL 'project = PROJ ORDER BY created ASC' and limit=1. The answer is the issue key of the first result.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>How many open issues (status is not "Done") are currently assigned to the user who leads the project with key "PROJ"? Respond with just the number.</question>
+    <answer>Use jira_get_project to find the lead, then jira_search_users to get their account ID, then jira_search_issues with JQL 'assignee = "{accountId}" AND status != Done'. The answer is the total count.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Find all Scrum boards in the Jira instance. For the first Scrum board found, how many sprints have been completed (state = "closed")? Respond with just the number.</question>
+    <answer>Use jira_list_boards with board_type="scrum" to find boards, then jira_list_sprints with state="closed" for the first board. The answer is the total count of closed sprints.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>In the most recently completed sprint on the first Scrum board, what percentage of issues were marked as "Done" by the end of the sprint? Round to the nearest whole number and respond with just the number followed by %.</question>
+    <answer>Find the most recent closed sprint, get its issues via jira_get_sprint_issues, count how many have status "Done" vs total, calculate percentage.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Find all issues of type "Bug" with priority "High" or "Highest" across all projects. Which project has the most such bugs? Respond with the project key.</question>
+    <answer>Use jira_search_issues with JQL 'issuetype = Bug AND priority in (High, Highest)' and paginate through all results, counting by project.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Look at the issue in the instance that has the most comments. What is the display name of the user who wrote the first comment on that issue?</question>
+    <answer>Search issues ordered by comment count or check multiple issues, then use jira_get_comments on the issue with most comments, with order_by="+created" to get the earliest comment author.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Find the currently authenticated user's account. What timezone are they configured to use? Respond with the timezone string exactly as returned by the API (e.g., "America/New_York").</question>
+    <answer>Use jira_get_myself and return the timezone field value.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>For the project with the most total issues, list all its available issue types. How many of those issue types are subtask types? Respond with just the number.</question>
+    <answer>Search to find which project has the most issues, then use jira_get_project to list issue types and count those where subtask=True.</answer>
+  </qa_pair>
+
+  <qa_pair>
+    <question>Find an issue that has available workflow transitions. Starting from the current status of that issue, how many distinct statuses can it transition to in a single step? Respond with just the number.</question>
+    <answer>Pick an issue, use jira_get_transitions to list available transitions, count the distinct to_status values.</answer>
+  </qa_pair>
+</evaluation>

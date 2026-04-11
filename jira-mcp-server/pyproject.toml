@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jira-mcp-server"
+version = "0.1.0"
+description = "MCP server for Jira Cloud REST API"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "httpx",
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+jira-mcp = "jira_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jira_mcp"]
