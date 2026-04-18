@@ -97,6 +97,32 @@ Each analyzed text produces:
 
 The `auto` backend (default) tries transformers first and falls back to lexicon if unavailable.
 
+## MCP Server (for Claude.ai)
+
+To use this tool directly from Claude.ai, run the MCP server locally and connect it via Claude Desktop settings.
+
+**Install deps and start the server:**
+```bash
+pip install -r mcp/requirements.txt
+python mcp/server.py
+```
+
+**Add to Claude Desktop** (`claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "sentiment-analysis": {
+      "command": "python",
+      "args": ["/absolute/path/to/skills/sentiment-analysis/mcp/server.py"]
+    }
+  }
+}
+```
+
+**Tools exposed:**
+- `analyze_sentiment(text, model?, backend?)` — analyze a single text
+- `analyze_sentiment_batch(texts, model?, backend?)` — analyze a list, returns results + summary counts
+
 ## Best Practices
 
 - **First run**: The model downloads on first use (~250MB for DistilBERT). Subsequent runs use the cache
