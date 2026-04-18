@@ -1,11 +1,14 @@
 ---
 name: sentiment-analysis
-description: Analyze text for emotional sentiment (positive, negative, neutral, mixed). Use when the user asks to analyze sentiment, tone, or emotional valence of text, reviews, feedback, survey responses, social media posts, or any written content. Supports single text analysis, batch processing of multiple texts, and file-based input (CSV, TXT, JSON).
+description: Analyze text for emotional sentiment (positive, negative, neutral) using Hugging Face transformers and DistilBERT. Use when the user asks to analyze sentiment, tone, or emotional valence of text, reviews, feedback, survey responses, social media posts, or any written content. Supports single text analysis, batch processing of multiple texts, and file-based input (CSV, TXT, JSON). Supports custom HF models.
 ---
 
 # Sentiment Analysis Tool
 
-Analyze text for sentiment polarity and emotional tone using a lexicon-based approach with no external API dependencies.
+Analyze text sentiment using Hugging Face's `transformers` library with a pre-trained DistilBERT model (`distilbert-base-uncased-finetuned-sst-2-english`). Falls back to a built-in lexicon engine when transformers is unavailable.
+
+**For HF backend**: `pip install transformers torch`
+**Lexicon backend**: No dependencies (works offline)
 
 **Helper Scripts Available**:
 - `scripts/analyze_sentiment.py` - Core sentiment analysis engine
@@ -33,8 +36,14 @@ python scripts/analyze_sentiment.py --file data.json --field comment
 # Output results as CSV
 python scripts/analyze_sentiment.py --file input.txt --output-format csv
 
-# Detailed breakdown with word-level scores
-python scripts/analyze_sentiment.py --text "The movie was absolutely wonderful but the ending was disappointing" --verbose
+# Use a different Hugging Face model
+python scripts/analyze_sentiment.py --model nlptown/bert-base-multilingual-uncased-sentiment --text "J'adore ce produit!"
+
+# Force lexicon backend (no dependencies, works offline)
+python scripts/analyze_sentiment.py --backend lexicon --text "Works anywhere"
+
+# Force transformers backend (fails if HF unavailable)
+python scripts/analyze_sentiment.py --backend transformers --text "Require HF"
 ```
 
 ## Decision Tree: Choosing Your Approach
@@ -48,36 +57,50 @@ User task → What kind of input?
     └─ JSON file → Use --file data.json --field <field_name>
 
 Output format needed?
-    ├─ Human-readable (default) → No extra flags
-    ├─ JSON → --output-format json (default)
+    ├─ JSON (default) → --output-format json
     ├─ CSV → --output-format csv
-    └─ Detailed breakdown → Add --verbose
+    └─ Human-readable → --output-format text
+
+Need a different language or domain?
+    └─ Use --model <huggingface-model-id>
+
+Backend?
+    ├─ auto (default) → Tries transformers, falls back to lexicon
+    ├─ transformers → Requires HF + torch installed
+    └─ lexicon → Offline, no dependencies
 ```
 
 ## Output Format
 
 Each analyzed text produces:
-- **label**: Overall sentiment classification (`positive`, `negative`, `neutral`, `mixed`)
-- **compound**: Normalized compound score from -1.0 (most negative) to +1.0 (most positive)
-- **positive**: Proportion of positive sentiment (0.0 to 1.0)
-- **negative**: Proportion of negative sentiment (0.0 to 1.0)
-- **neutral**: Proportion of neutral sentiment (0.0 to 1.0)
+- **label**: Overall sentiment classification (`positive`, `negative`, `neutral`)
+- **score**: Model confidence for the winning label (0.0 to 1.0)
+- **compound**: Directional score from -1.0 (most negative) to +1.0 (most positive)
+- **positive**: Probability of positive sentiment (0.0 to 1.0)
+- **negative**: Probability of negative sentiment (0.0 to 1.0)
 
-With `--verbose`, you also get:
-- **word_scores**: Per-word sentiment contributions
+## Recommended Models
 
-## Thresholds
+| Model | Use Case |
+|-------|----------|
+| `distilbert-base-uncased-finetuned-sst-2-english` (default) | General English sentiment, fast |
+| `nlptown/bert-base-multilingual-uncased-sentiment` | Multilingual, 1-5 star ratings |
+| `cardiffnlp/twitter-roberta-base-sentiment-latest` | Social media / tweets |
+| `siebert/sentiment-roberta-large-english` | High-accuracy English |
 
-| Compound Score | Label    |
-|----------------|----------|
-| >= 0.05        | positive |
-| <= -0.05       | negative |
-| both pos & neg > 0.25 | mixed |
-| else           | neutral  |
+## Backends
+
+| Backend | Accuracy | Speed | Dependencies | Offline |
+|---------|----------|-------|--------------|---------|
+| `transformers` (default) | High (DistilBERT) | ~0.5s/text | transformers, torch | No (first run) |
+| `lexicon` | Good (rule-based) | Instant | None | Yes |
+
+The `auto` backend (default) tries transformers first and falls back to lexicon if unavailable.
 
 ## Best Practices
 
-- **Preprocessing**: The script handles basic text normalization, but for best results provide clean text without HTML tags or excessive special characters
-- **Batch processing**: For large datasets, use file-based input rather than multiple `--text` flags
-- **Context**: The lexicon approach works well for reviews, social media, and general text. It may be less accurate for domain-specific jargon or sarcasm
-- **Verbose mode**: Use `--verbose` when you need to understand which specific words are driving the sentiment score
+- **First run**: The model downloads on first use (~250MB for DistilBERT). Subsequent runs use the cache
+- **Batch processing**: For large datasets, use file-based input — the script processes in batches of 32 for efficiency
+- **Truncation**: Texts longer than the model's max token length (512 tokens) are automatically truncated
+- **Custom models**: Any Hugging Face `text-classification` model works with `--model`. Check the [Hugging Face Hub](https://huggingface.co/models?pipeline_tag=text-classification) for options
+- **Offline use**: Use `--backend lexicon` when no internet or HF dependencies are available
