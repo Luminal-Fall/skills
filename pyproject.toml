@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+testpaths = [
+    "skills/slack-gif-creator/tests",
+    "skills/sentiment-analysis/tests",
+    "skills/mcp-builder/tests",
+    "skills/docx/tests",
+    "skills/skill-creator/tests",
+    "skills/pptx/tests",
+]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
