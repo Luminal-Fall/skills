@@ -8,4 +8,12 @@ testpaths = [
     "skills/pptx/tests",
 ]
 python_files = ["test_*.py"]
+python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["skills"]
+omit = ["*/tests/*", "*/templates/*"]
+
+[tool.coverage.report]
+show_missing = true
